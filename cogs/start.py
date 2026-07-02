@@ -35,7 +35,8 @@ class Handler(cog.Cog):
         return await self._githubCache.resolve("latest_commit", _fetch)
 
     @cog.regMessage(cog.F.text == "/start")
-    async def startcommand(self, message: cog.Message):
+    async def startcommand(self, message: cog.Message, state: cog.FSMContext):
+        await state.clear()
         await message.answer("""Welcome to the Fast Sticker Bot!
 
 Use /help to see available commands

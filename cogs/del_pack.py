@@ -10,7 +10,7 @@ class Handler(cog.Cog):
 
     @cog.regMessage(cog.F.text == "/del_pack")
     async def delete_pack_command(self, message: cog.Message, state: cog.FSMContext):
-
+        await state.clear()
         stickersets = await self.bot.dbm.readStickerpacks(tgId=message.from_user.id)
 
         if not stickersets:

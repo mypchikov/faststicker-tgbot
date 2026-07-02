@@ -6,7 +6,8 @@ class Handler(cog.Cog):
         super().__init__(bot)
 
     @cog.regMessage(cog.F.text == "/my_packs")
-    async def my_packs_command(self, message: cog.Message):
+    async def my_packs_command(self, message: cog.Message, state: cog.FSMContext):
+        await state.clear()
         userpacks = await self.bot.dbm.readStickerpacks(tgId=message.from_user.id)
         if not userpacks:
             await message.reply(
@@ -31,8 +32,9 @@ class Handler(cog.Cog):
                     tgId=message.from_user.id, packName=stickerpack.packName
                 )
                 continue
-            stickerpacksFormatted.append(f"""<blockquote><a href=\"https://t.me/addstickers/{full_pack_name}\"><b>{stickerpack.packTitle}</b></a></blockquote>
-{len(tg_stickerset.stickers)} stickers""")
+
+        stickerpacksFormatted.append(f"""<blockquote><a href=\"https://t.me/addstickers/{full_pack_name}\"><b>{stickerpack.packTitle}</b></a></blockquote>
+{len(tg_stickerset.stickers)}/120 stickers""")
 
         await message.answer(f"""Your stickerpacks:
 

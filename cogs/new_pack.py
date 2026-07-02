@@ -8,6 +8,7 @@ class Handler(cog.Cog):
 
     @cog.regMessage(cog.F.text == "/new_pack")
     async def command(self, message: cog.Message, state: cog.FSMContext):
+        await state.clear()
         await message.answer("""Let's create a new sticker pack!
 
 First, send me title for your new sticker pack, like 'My Cool Stickers'.""")
@@ -139,7 +140,7 @@ First, send me title for your new sticker pack, like 'My Cool Stickers'.""")
             )
             await state.update_data(stickers=stickers)
             await message.answer(
-                f"Sticker added!\nYou can send me more stickers to add to the pack, or send /done when you are finished."
+                "Sticker added!\nYou can send me more stickers to add to the pack, or send /done when you are finished."
             )
         else:
             await state.update_data(
@@ -190,7 +191,7 @@ First, send me title for your new sticker pack, like 'My Cool Stickers'.""")
         )
 
         await message.answer(
-            f"Sticker added!\nYou can send me more stickers to add to the pack, or send /done when you are finished."
+            "Sticker added!\nYou can send me more stickers to add to the pack, or send /done when you are finished."
         )
         await state.set_state(cog.states.PackCreationState.stickersAdd)
 

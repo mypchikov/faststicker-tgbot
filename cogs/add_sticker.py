@@ -8,6 +8,7 @@ class Handler(cog.Cog):
 
     @cog.regMessage(cog.F.text == "/add_sticker")
     async def command(self, message: cog.Message, state: cog.FSMContext):
+        await state.clear()
         stickersets = await self.bot.dbm.readStickerpacks(tgId=message.from_user.id)
 
         if not stickersets:
@@ -38,8 +39,24 @@ class Handler(cog.Cog):
     async def receive_packnamet(self, message: cog.Message, state: cog.FSMContext):
         pack_name = message.text
         full_pack_name = pack_name + "_by_" + (await self.bot.get_me()).username
+        stickerset = await self.bot.get_sticker_set(full_pack_name)
+        if not stickerset:
+            await message.reply(
+                "I didn't found this stickerpack on telegram.. are you sure that it exists?\nYou can check your stickerpacks in official stickers bot - @stickers"
+            )
+            return await state.clear()
+
+        if len(stickerset.stickers) >= 120:
+            await message.reply(
+                "Whoa whoa! This stickerpack is full! 120 out of 120!\nMay be you want to create a new stickerpack via /new_pack?"
+            )
+            return await state.clear()
+
         await message.answer(
-            f'Please send me the sticker image you want to add to your <a href="https://t.me/addstickers/{full_pack_name}">pack</a>, along with the emojis in the caption.\n(use /copy_emoji to copy emojis from existing stickers!)'
+            f"""Please send me the sticker image you want to add to your <a href="https://t.me/addstickers/{full_pack_name}">pack</a>, along with the emojis in the caption.
+(use /copy_emoji to copy emojis from existing stickers!)
+
+There is {len(stickerset.stickers)} stickers in this pack, so you can add {120 - len(stickerset.stickers)} more!"""
         )
         await state.update_data(packToAdd=pack_name)
         await state.set_state(cog.states.AddStickerState.waitingForSticker)
@@ -56,6 +73,7 @@ class Handler(cog.Cog):
 
         emojis = list(message.text)
         data = await state.get_data()
+        packToAdd: str = data["packToAdd"]
         stickers = data.get("stickers", [])
         current_sticker = data.get("current_sticker")
         current_format = data.get("current_format", "static")
@@ -81,9 +99,13 @@ class Handler(cog.Cog):
             current_format=None,
             current_filename=None,
         )
+        stickerset = await self.bot.get_sticker_set(packToAdd)
 
         await message.answer(
-            "Sticker added to the pack!\nYou can send me more stickers to add to the pack, or send /done when you are finished."
+            f"""Sticker added to the queue!
+You can send me more stickers to add to the pack, or send /done when you are finished and stickers will be added to pack.
+
+<i>*you can add up to {120 - len(stickerset.stickers) - len(stickers)} stickers to this pack now</i>"""
         )
         await state.set_state(cog.states.AddStickerState.waitingForSticker)
 
