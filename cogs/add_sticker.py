@@ -1,3 +1,5 @@
+from struct import pack
+
 import cog
 from utils.integrations.video_convert import convert_to_webm
 
@@ -79,6 +81,18 @@ There is {len(stickerset.stickers)} stickers in this pack, so you can add {120 -
         current_format = data.get("current_format", "static")
         current_filename = data.get("current_filename", "sticker.png")
 
+        stickerset = await self.bot.get_sticker_set(packToAdd)
+        if not stickerset:
+            return await message.reply(
+                "Oops! I can't found this stickerpack on telegram right now..."
+            )
+
+        if (120 - len(stickerset.stickers) - len(stickers)) <= 0:
+            return await message.reply("""Yo yo yo, you've hit the limit!
+You can't add more than in your queue in this pack now!
+Commit these stickers to your pack via /done or clear the queue via /cancel
+<i>jeez...</i>""")
+
         if not current_sticker:
             await message.answer(
                 "Error: sticker for this emojis was not found, send the sticker again."
@@ -99,7 +113,6 @@ There is {len(stickerset.stickers)} stickers in this pack, so you can add {120 -
             current_format=None,
             current_filename=None,
         )
-        stickerset = await self.bot.get_sticker_set(packToAdd)
 
         await message.answer(
             f"""Sticker added to the queue!
@@ -137,6 +150,22 @@ You can send me more stickers to add to the pack, or send /done when you are fin
 
         data = await state.get_data()
         copy_emoji = data.get("copy_emoji", False)
+        packToAdd = data["packToAdd"]
+        stickers = data.get("stickers", [])
+
+        stickerset = await self.bot.get_sticker_set(
+            packToAdd + "_by_" + (await self.bot.get_me()).username
+        )
+        if not stickerset:
+            return await message.reply(
+                "Oops! I can't found this stickerpack on telegram right now..."
+            )
+
+        if (120 - len(stickerset.stickers) - len(stickers)) <= 0:
+            return await message.reply("""Yo yo yo, you've hit the limit!
+You can't add more than in your queue in this pack now!
+Commit these stickers to your pack via /done or clear the queue via /cancel
+<i>jeez...</i>""")
 
         sticker_data = None
         sticker_format = "static"
@@ -224,8 +253,6 @@ You can send me more stickers to add to the pack, or send /done when you are fin
                 )
             emojis = list(message.caption)
             self.bot.log("reading caption", caption=emojis, type="debug")
-            data = await state.get_data()
-            stickers = data.get("stickers", [])
             stickers.append(
                 {
                     "emojis": emojis,
@@ -236,7 +263,10 @@ You can send me more stickers to add to the pack, or send /done when you are fin
             )
             await state.update_data(stickers=stickers)
             await message.answer(
-                "Sticker added to the pack!\nYou can send me more stickers to add to the pack, or send /done when you are finished."
+                f"""Sticker added to the pack!
+You can send me more stickers to add to the pack, or send /done when you are finished.
+
+<i>*you can add up to {120 - len(stickerset.stickers) - len(stickers)} stickers to this pack now</i>"""
             )
         elif copy_emoji and message.sticker and message.sticker.emoji:
             emojis = message.sticker.emoji
@@ -252,7 +282,10 @@ You can send me more stickers to add to the pack, or send /done when you are fin
             )
             await state.update_data(stickers=stickers)
             await message.answer(
-                f"Sticker added to the pack with emojis: {' '.join(emojis)}!\nYou can send me more stickers to add to the pack, or send /done when you are finished."
+                f"""Sticker added to the pack with emojis: {" ".join(emojis)}!
+You can send me more stickers to add to the pack, or send /done when you are finished.
+
+<i>*you can add up to {120 - len(stickerset.stickers) - len(stickers)} stickers to this pack now</i>"""
             )
         else:
             await state.update_data(
