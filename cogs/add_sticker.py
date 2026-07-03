@@ -81,7 +81,9 @@ There is {len(stickerset.stickers)} stickers in this pack, so you can add {120 -
         current_format = data.get("current_format", "static")
         current_filename = data.get("current_filename", "sticker.png")
 
-        stickerset = await self.bot.get_sticker_set(packToAdd)
+        stickerset = await self.bot.get_sticker_set(
+            packToAdd + "_by_" + (await self.bot.get_me()).username
+        )
         if not stickerset:
             return await message.reply(
                 "Oops! I can't found this stickerpack on telegram right now..."

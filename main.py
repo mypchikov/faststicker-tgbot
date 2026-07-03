@@ -9,8 +9,8 @@ bot.load_handlers(
         "cogs.del_pack",
         "cogs.my_packs",
         "cogs.add_sticker",
-        "cogs.pin",
         "cogs.middlewares",
+        "cogs.pin",
     ]
 )
 
