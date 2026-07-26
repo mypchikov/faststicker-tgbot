@@ -1,6 +1,5 @@
 import cog
 from utils.integrations.video_convert import convert_to_webm
-from utils.sticker_queue import source_message_link, undo_last, view_queue
 
 
 class Handler(cog.Cog):
@@ -49,11 +48,7 @@ First, send me title for your new sticker pack, like 'My Cool Stickers'.""")
         await state.update_data(packName=pack_name)
 
         await message.answer(
-            f"Great! Your new sticker pack '{pack_name}' will be created.\n"
-            "Send a sticker image with its emojis in the caption.\n\n"
-            "/view — show the queue\n"
-            "/undo — remove the last sticker\n"
-            "/done — create the pack"
+            f"Great! Your new sticker pack '{pack_name}' will be created.\nPlease send me the sticker image and the emojis, that will be associated with this sticker.\nI'll convert it to needed format and resolution!."
         )
         await state.set_state(cog.states.PackCreationState.stickersAdd)
 
@@ -62,10 +57,6 @@ First, send me title for your new sticker pack, like 'My Cool Stickers'.""")
 
         if message.text == "/done":
             return await self.finalize_pack(message=message, state=state)
-        if message.text == "/undo":
-            return await undo_last(message, state)
-        if message.text == "/view":
-            return await view_queue(message, state)
 
         if (
             not message.sticker
@@ -145,7 +136,6 @@ First, send me title for your new sticker pack, like 'My Cool Stickers'.""")
                     "sticker": sticker_data,
                     "format": sticker_format,
                     "filename": filename,
-                    "source_link": await source_message_link(message, self.bot),
                 }
             )
             await state.update_data(stickers=stickers)
@@ -157,7 +147,6 @@ First, send me title for your new sticker pack, like 'My Cool Stickers'.""")
                 current_sticker=sticker_data,
                 current_format=sticker_format,
                 current_filename=filename,
-                current_source_link=await source_message_link(message, self.bot),
             )
             await message.answer("Please provide emojis for this sticker.")
             await state.set_state(cog.states.PackCreationState.stickersAddStickerEmojis)
@@ -166,11 +155,6 @@ First, send me title for your new sticker pack, like 'My Cool Stickers'.""")
     async def receive_sticker_sticker_emojis(
         self, message: cog.Message, state: cog.FSMContext
     ):
-        if message.text == "/undo":
-            return await undo_last(message, state)
-        if message.text == "/view":
-            return await view_queue(message, state)
-
         if not cog.sh.is_emoji(message.text):
             await message.answer("Please, send only emojis!")
             return
@@ -182,7 +166,6 @@ First, send me title for your new sticker pack, like 'My Cool Stickers'.""")
         current_sticker = data.get("current_sticker")
         current_format = data.get("current_format", "static")
         current_filename = data.get("current_filename", "sticker.png")
-        current_source_link = data.get("current_source_link")
 
         if not current_sticker:
             await message.answer(
@@ -196,7 +179,6 @@ First, send me title for your new sticker pack, like 'My Cool Stickers'.""")
                 "sticker": current_sticker,
                 "format": current_format,
                 "filename": current_filename,
-                "source_link": current_source_link,
             }
         )
 
@@ -205,7 +187,6 @@ First, send me title for your new sticker pack, like 'My Cool Stickers'.""")
             current_sticker=None,
             current_format=None,
             current_filename=None,
-            current_source_link=None,
         )
 
         await message.answer(
@@ -219,12 +200,6 @@ First, send me title for your new sticker pack, like 'My Cool Stickers'.""")
         title = data.get("title")
         pack_name = data.get("packName")
         stickers = data.get("stickers", [])
-
-        if not stickers:
-            await message.answer(
-                "The queue is empty. Add at least one sticker before using /done."
-            )
-            return await state.set_state(cog.states.PackCreationState.stickersAdd)
 
         stickerlist = []
 

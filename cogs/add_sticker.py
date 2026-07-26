@@ -1,6 +1,5 @@
 import cog
 from utils.integrations.video_convert import convert_to_webm
-from utils.sticker_queue import source_message_link, undo_last, view_queue
 
 
 class Handler(cog.Cog):
@@ -54,14 +53,10 @@ class Handler(cog.Cog):
             return await state.clear()
 
         await message.answer(
-            f"""Send a sticker with its emojis in the caption to add it to your <a href="https://t.me/addstickers/{full_pack_name}">pack</a>.
+            f"""Please send me the sticker image you want to add to your <a href="https://t.me/addstickers/{full_pack_name}">pack</a>, along with the emojis in the caption.
+(use /copy_emoji to copy emojis from existing stickers!)
 
-/view — show the queue
-/undo — remove the last sticker
-/done — add queued stickers
-/copy_emoji — copy emojis from existing stickers
-
-Stickers: {len(stickerset.stickers)}/120."""
+There is {len(stickerset.stickers)} stickers in this pack, so you can add {120 - len(stickerset.stickers)} more!"""
         )
         await state.update_data(packToAdd=pack_name)
         await state.set_state(cog.states.AddStickerState.waitingForSticker)
@@ -70,11 +65,6 @@ Stickers: {len(stickerset.stickers)}/120."""
     async def receive_sticker_sticker_emojisa(
         self, message: cog.Message, state: cog.FSMContext
     ):
-        if message.text == "/undo":
-            return await undo_last(message, state)
-        if message.text == "/view":
-            return await view_queue(message, state)
-
         if not cog.sh.is_emoji(message.text):
             await message.answer("Please, send only unicode emojis in the message!")
             return await state.set_state(
@@ -88,7 +78,6 @@ Stickers: {len(stickerset.stickers)}/120."""
         current_sticker = data.get("current_sticker")
         current_format = data.get("current_format", "static")
         current_filename = data.get("current_filename", "sticker.png")
-        current_source_link = data.get("current_source_link")
 
         stickerset = await self.bot.get_sticker_set(
             packToAdd + "_by_" + (await self.bot.get_me()).username
@@ -116,7 +105,6 @@ Commit these stickers to your pack via /done or clear the queue via /cancel
                 "sticker": current_sticker,
                 "format": current_format,
                 "filename": current_filename,
-                "source_link": current_source_link,
             }
         )
         await state.update_data(
@@ -124,7 +112,6 @@ Commit these stickers to your pack via /done or clear the queue via /cancel
             current_sticker=None,
             current_format=None,
             current_filename=None,
-            current_source_link=None,
         )
 
         await message.answer(
@@ -151,10 +138,6 @@ You can send me more stickers to add to the pack, or send /done when you are fin
 
         if message.text == "/done":
             return await self.finalize_pack(message, state)
-        if message.text == "/undo":
-            return await undo_last(message, state)
-        if message.text == "/view":
-            return await view_queue(message, state)
 
         if (
             not message.sticker
@@ -261,7 +244,6 @@ Commit these stickers to your pack via /done or clear the queue via /cancel
                     current_sticker=sticker_data,
                     current_format=sticker_format,
                     current_filename=filename,
-                    current_source_link=await source_message_link(message, self.bot),
                 )
                 await message.reply(
                     "Please, provide only emojis in the caption. Send the emojis for this sticker now."
@@ -277,7 +259,6 @@ Commit these stickers to your pack via /done or clear the queue via /cancel
                     "sticker": sticker_data,
                     "format": sticker_format,
                     "filename": filename,
-                    "source_link": await source_message_link(message, self.bot),
                 }
             )
             await state.update_data(stickers=stickers)
@@ -297,7 +278,6 @@ You can send me more stickers to add to the pack, or send /done when you are fin
                     "sticker": sticker_data,
                     "format": sticker_format,
                     "filename": filename,
-                    "source_link": await source_message_link(message, self.bot),
                 }
             )
             await state.update_data(stickers=stickers)
@@ -312,7 +292,6 @@ You can send me more stickers to add to the pack, or send /done when you are fin
                 current_sticker=sticker_data,
                 current_format=sticker_format,
                 current_filename=filename,
-                current_source_link=await source_message_link(message, self.bot),
             )
             await message.reply("Please, provide emojis now for this sticker.")
             return await state.set_state(
