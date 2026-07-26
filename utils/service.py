@@ -9,7 +9,7 @@ from aiogram import Dispatcher
 from colorama import Fore
 
 from utils import shortcuts
-from utils.integrations import databaseMethods
+from utils.integrations import databaseMethods, database_schema
 from utils.stores import config
 
 
@@ -33,6 +33,7 @@ class Bot(aiBot):
 
     async def databaseConnect(self):
         self.db = await aiosqlite.connect(self.config.databasePath)
+        await database_schema.initialize_schema(self.db)
         self.dbm: databaseMethods.DatabaseMethods = databaseMethods.DatabaseMethods(
             self
         )

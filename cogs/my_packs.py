@@ -1,3 +1,5 @@
+from html import escape
+
 import cog
 
 
@@ -15,30 +17,34 @@ class Handler(cog.Cog):
             )
             return
 
-        stickerpacksFormatted = []
+        stickerpacks_formatted = []
+        bot_username = (await self.bot.get_me()).username
 
         for stickerpack in userpacks:
-            full_pack_name = (
-                stickerpack.packName + "_by_" + (await self.bot.get_me()).username
-            )
+            full_pack_name = stickerpack.packName + "_by_" + bot_username
             try:
-                tg_stickerset = await self.bot.get_sticker_set(
-                    name=stickerpack.packName
-                    + "_by_"
-                    + (await self.bot.get_me()).username
-                )
+                tg_stickerset = await self.bot.get_sticker_set(name=full_pack_name)
             except Exception:
                 await self.bot.dbm.deleteStickerpacks(
                     tgId=message.from_user.id, packName=stickerpack.packName
                 )
                 continue
 
-        stickerpacksFormatted.append(f"""<blockquote><a href=\"https://t.me/addstickers/{full_pack_name}\"><b>{stickerpack.packTitle}</b></a></blockquote>
-{len(tg_stickerset.stickers)}/120 stickers""")
+            stickerpacks_formatted.append(
+                f'<a href="https://t.me/addstickers/{full_pack_name}">'
+                f"<b>{escape(stickerpack.packTitle)}</b></a>\n"
+                f"{len(tg_stickerset.stickers)}/120 stickers"
+            )
 
-        await message.answer(f"""Your stickerpacks:
+        if not stickerpacks_formatted:
+            await message.answer(
+                "You don't have any sticker packs created with this bot."
+            )
+            return
 
-{"\n\n".join(stickerpacksFormatted)}""")
+        await message.answer(f"""Your sticker packs:
+
+{"\n\n".join(stickerpacks_formatted)}""")
 
 
 def setup(bot: cog.Bot):
